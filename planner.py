@@ -194,6 +194,8 @@ def heuristic(state, action):
     if 'furnace' in stateDict:
         if action is "craft furnace at bench":
             return 10000
+        if action is "craft bench":
+            return 10000
         if not hasFurnace:
             hasFurnace = True
     else:
@@ -211,6 +213,8 @@ def heuristic(state, action):
             return 10000
         if action is "craft wooden_pickaxe at bench":
             return 10000
+        if action is "craft bench":
+            return 10000
         if not hasIronPickaxe:
             hasIronPickaxe = True
         
@@ -224,6 +228,8 @@ def heuristic(state, action):
         if action is "craft stone_pickaxe at bench":
             return 10000
         if action is "craft wooden_pickaxe at bench":
+            return 10000
+        if action is "craft bench":
             return 10000
         if not hasStonePickaxe:
             hasStonePickaxe = True
@@ -244,6 +250,8 @@ def heuristic(state, action):
             return 10000
         if action is "craft wooden_axe at bench":
             return 10000
+        if action is "craft bench":
+            return 10000
         if not hasIronAxe:
             hasIronAxe = True
         
@@ -260,6 +268,8 @@ def heuristic(state, action):
             return 10000
         if action is "craft wooden_axe at bench":
             return 10000
+        if action is "craft bench":
+            return 10000
         if not hasStoneAxe:
             hasStoneAxe = True
         
@@ -271,6 +281,8 @@ def heuristic(state, action):
         if action is "punch for wood":
             return 10000
         if action is "craft wooden_axe at bench":
+            return 10000
+        if action is "craft bench":
             return 10000
         if not hasWoodenAxe:
             hasWoodenAxe = True
