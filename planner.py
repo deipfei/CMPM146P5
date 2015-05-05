@@ -6,6 +6,15 @@ with open('Crafting.json') as f:
     Crafting = json.load(f)
 
 Items = Crafting['Items']
+Recipes = Crafting['Recipes']
+hasBench = False
+hasFurnace = False
+hasWoodenPickaxe = False
+hasWoodenAxe = False
+hasStonePickaxe = False
+hasStoneAxe = False
+hasIronPickaxe = False
+hasIronAxe = False
 
 def inventory_to_tuple(d):
     return tuple(d.get(name,0) for i,name in enumerate(Items))
@@ -90,7 +99,7 @@ def make_effector(rule):
 Recipe = namedtuple('Recipe',['name','check','effect','cost'])
 all_recipes = []
 #print Crafting['Recipes']
-for name, rule in Crafting['Recipes'].items():
+for name, rule in Recipes.items():
     checker = make_checker(rule)
     effector = make_effector(rule)
     recipe = Recipe(name, checker, effector, rule['Time'])
@@ -101,31 +110,127 @@ def graph(state):
         if r.check(state):
             yield (r.cost, r.effect(state), r.name)
 
-def rawMaterials(item, start):
-    tot_req = start
-    reqs = Crafting['Recipes'][item].get('Requires')
-    cons = Crafting['Recipes'][item].get('Consumes')
-    #for i in mats:
-    #    while reqs:
-            
-    return None
-        
+'''def rawMaterials(currentState, wantedState):
+    tot_req = wantedState
+    currState = currentState
+    requirements = tuple_subtract(currState, tot_req)
+    # if you do not have a goal object, it should show up as a negative number
+    for i in requirements:
+        if i > 0:
+            i = 0
+        if i < 0:
+            i = -i
     
+            
+    return None'''
+        
+def getActionsToTake(goals):
+    goalActionsToTake = {}
+    for i in goals:
+        for key in Crafting['Recipes'].items():
+            if key[1].get('Produces') and i in key[1].get('Produces'):
+                goalActionsToTake[i] = key
+    return goalActionsToTake
             
 def heuristic(state, action):
     # ... 
-    theGoal = Crafting['Goal']
+    theGoal = Crafting['Goal'].keys()
+    goalActions = getActionsToTake(theGoal)
+    
+    actionsToTake = goalActions.values()
+    
+    
+    
+    secondLevelGoal = theGoal
+    
+    
+    
+    for a, i in goalActions.values():
+        if i.get('Requires'):
+            for j in i.get('Requires').keys():
+                secondLevelGoal.append(j)
+        if i.get('Consumes'):
+            for j in i.get('Consumes').keys():
+                secondLevelGoal.append(j)
+                
+    
+    
+    secondLevelActions = getActionsToTake(secondLevelGoal).values()
+    
+    
+    
+    secondLevelOnlyActions = []
+    
+    for i in secondLevelActions:
+        secondLevelOnlyActions.append(i[0])
+        
+    '''print '*********************'
+    print secondLevelOnlyActions
+    print '*********************'
+    print " "'''
+    
+    
     stateDict = tuple_to_inventory(state)
-    recipesReq = Crafting['Recipes'][action].get('Requires')
-    recipesPro = Crafting['Recipes'][action].get('Produces')
+    recipesReq = Recipes[action].get('Requires')
+    recipesPro = Recipes[action].get('Produces')
+    global hasBench
+    global hasFurnace
+    global hasWoodenPickaxe
+    global hasWoodenAxe
+    global hasStonePickaxe
+    global hasStoneAxe
+    global hasIronPickaxe
+    global hasIronAxe
+    
+    if 'bench' in stateDict:
+        if action is "craft bench":
+            return 10000
+        if not hasBench:
+            hasBench = True
+    else:
+        if action is "craft bench":
+            return -10000
+            
+    if 'furnace' in stateDict:
+        if action is "craft furnace at bench":
+            return 10000
+        if not hasFurnace:
+            hasFurnace = True
+    else:
+        if action is "craft furnace at bench":
+            return -10000
+    
     if 'iron_pickaxe' in stateDict:
         if recipesReq and 'stone_pickaxe' in recipesReq:
             return 10000
         if recipesReq and 'wooden_pickaxe' in recipesReq:
             return 10000
+        if action is "craft iron_pickaxe at bench":
+            return 10000
+        if action is "craft stone_pickaxe at bench":
+            return 10000
+        if action is "craft wooden_pickaxe at bench":
+            return 10000
+        if not hasIronPickaxe:
+            hasIronPickaxe = True
+        
+    else:
+        if hasIronPickaxe:
+            return 10000
+            
     if 'stone_pickaxe' in stateDict:
         if recipesReq and 'wooden_pickaxe' in recipesReq:
             return 10000
+        if action is "craft stone_pickaxe at bench":
+            return 10000
+        if action is "craft wooden_pickaxe at bench":
+            return 10000
+        if not hasStonePickaxe:
+            hasStonePickaxe = True
+    else:
+        if hasStonePickaxe:
+            return 10000
+    
     if 'iron_axe' in stateDict:
         if recipesReq and 'stone_axe' in recipesReq:
             return 10000
@@ -133,22 +238,61 @@ def heuristic(state, action):
             return 10000
         if action is "punch for wood":
             return 10000
+        if action is "craft iron_axe at bench":
+            return 10000
+        if action is "craft stone_axe at bench":
+            return 10000
+        if action is "craft wooden_axe at bench":
+            return 10000
+        if not hasIronAxe:
+            hasIronAxe = True
+        
+    else:
+        if hasIronAxe:
+            return 10000
+    
     if 'stone_axe' in stateDict:
         if recipesReq and 'wooden_axe' in recipesReq:
             return 10000
         if action is "punch for wood":
             return 10000
-    if 'bench' in stateDict:
-        if action is "craft bench":
+        if action is "craft stone_axe at bench":
             return 10000
-    if 'furnace' in stateDict:
-        if action is "craft furnace":
+        if action is "craft wooden_axe at bench":
             return 10000
+        if not hasStoneAxe:
+            hasStoneAxe = True
+        
+    else:
+        if hasStoneAxe:
+            return 10000
+    
+    if 'wooden_axe' in stateDict:
+        if action is "punch for wood":
+            return 10000
+        if action is "craft wooden_axe at bench":
+            return 10000
+        if not hasWoodenAxe:
+            hasWoodenAxe = True
+    else:
+        if hasWoodenAxe:
+            return 10000
+    
+    maxItems = 8
+    
+    '''for i in Crafting['Goal'].values():
+        if i > maxItems:
+            maxItems = i'''
+    
     for i in stateDict:
-        if stateDict[i] > 8:
+        if stateDict[i] > maxItems:
             if recipesPro:
                 if i in recipesPro:
                     return 10000
+                    
+    if action in secondLevelOnlyActions:
+        return -1000
+        
     return 0 # or something more accurate
     
 def search(graph, initial, is_goal, limit, heuristic):
@@ -180,10 +324,19 @@ def search(graph, initial, is_goal, limit, heuristic):
             n_state_t = inventory_to_tuple(n_state)
             alt = d_cost + n_cost #changed to reflect total distance
             if n_state_t not in dist or alt < dist[n_state_t]:
-                dist[n_state_t] = alt + heuristic(n_state_t, n_action)
-                prev[(n_action, n_state_t, alt)] = (d_action, u, d_cost)
-                #handle if already in queue
-                heappush(queue, (dist[n_state_t], n_state_t, n_action))
+                priority = alt+heuristic(n_state_t, n_action)
+                if prev[(d_action, u, d_cost)] is not None:
+                    prevac, prevst, prevco = prev[(d_action, u, d_cost)]
+                    if prevac is not d_action:
+                        dist[n_state_t] = priority
+                        prev[(n_action, n_state_t, priority)] = (d_action, u, d_cost)
+                        #handle if already in queue
+                        heappush(queue, (dist[n_state_t], n_state_t, n_action))
+                else:
+                    dist[n_state_t] = priority
+                    prev[(n_action, n_state_t, priority)] = (d_action, u, d_cost)
+                    #handle if already in queue
+                    heappush(queue, (dist[n_state_t], n_state_t, n_action))
 
     plan = []
     total_cost = 0
@@ -194,11 +347,16 @@ def search(graph, initial, is_goal, limit, heuristic):
         while add != ("start", initial_t, 0):
             a, s, t = add
             actual_state = tuple_to_inventory(s)
-            plan.insert(0, (a, actual_state, t))
+            newd = dist[s]
+            plan.insert(0, (a, actual_state, newd))
             add = prev[add]
     return total_cost, plan
 
-tot_cost, fullplan = search(graph, Crafting['Initial'], make_goal_checker(Crafting['Goal']), 80, heuristic)
+tot_cost, fullplan = search(graph, Crafting['Initial'], make_goal_checker(Crafting['Goal']), 2000, heuristic)
+runningcost = 0
 for i in fullplan:
     act, st, time = i
-    print str(act) + " " + str(st) + " " + str(time)
+    runningcost += Recipes[act].get('Time')
+    print str(act) + " " + str(st) + " " + str(runningcost)
+    
+print str(runningcost)
